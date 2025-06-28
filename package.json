@@ -20,7 +20,7 @@
     "engine-requirements.js"
   ],
   "scripts": {
-    "build": "tsc && typedoc",
+    "build": "tsc",
     "build:all": "tsc && typedoc",
     "build:docs": "typedoc",
     "build:tsc": "tsc",
