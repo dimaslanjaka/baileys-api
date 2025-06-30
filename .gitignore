@@ -1,20 +1,36 @@
+# System files
 .DS_Store
+*/.DS_Store
+
+# Environment files
 .env
+
+# Package manager files
+node_modules/
 .yarn/
 *.tgz
-*/.DS_Store
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+
+# Build and output
+lib/
+output.csv
+
+# Auth and store files
 auth_info*.json
 baileys_auth_info*
 baileys_store*.json
+
+# Message and token files
+messages*.json
 browser-messages.json
 browser-token.json
 decoded-ws.json
-docs
-lib
-messages*.json
-node_modules
-output.csv
-Proxy
-test.ts
-TestData
 wa-logs.txt
+
+# Documentation and test files
+docs/
+test.ts
+TestData/
+Proxy/
