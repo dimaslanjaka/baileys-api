@@ -34,3 +34,4 @@ docs/
 test.ts
 TestData/
 Proxy/
+*.log
