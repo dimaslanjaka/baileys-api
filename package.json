@@ -58,6 +58,7 @@
     "@typescript-eslint/eslint-plugin": "^8.32.0",
     "@typescript-eslint/parser": "^8.32.0",
     "@whiskeysockets/eslint-config": "github:whiskeysockets/eslint-config",
+    "binary-collections": "^2.0.9",
     "conventional-changelog-cli": "^2.2.2",
     "esbuild-register": "^3.6.0",
     "eslint": "^9.31.0",
