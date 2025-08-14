@@ -8,6 +8,7 @@
     "outDir": "lib",
     "strict": false,
     "strictNullChecks": true,
+    "allowSyntheticDefaultImports": true,
     "skipLibCheck": true,
     "noImplicitThis": true,
     "esModuleInterop": true,
