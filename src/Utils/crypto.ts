@@ -129,15 +129,21 @@ export async function hkdf(
 	expandedLength: number,
 	info: { salt?: Buffer; info?: string }
 ): Promise<Buffer> {
-	// Ensure we have a Uint8Array for the key material
-	const inputKeyMaterial = buffer instanceof Uint8Array ? buffer : new Uint8Array(buffer)
-
 	// Set default values if not provided
-	const salt = info.salt ? new Uint8Array(info.salt) : new Uint8Array(0)
-	const infoBytes = info.info ? new TextEncoder().encode(info.info) : new Uint8Array(0)
+	const salt = info.salt ? new Uint8Array(info.salt) : new Uint8Array(0);
+	const infoBytes = info.info ? new TextEncoder().encode(info.info) : new Uint8Array(0);
+
+	// Ensure we have a Uint8Array for the key material
+	const inputKeyMaterial = buffer instanceof Uint8Array ? buffer : new Uint8Array(buffer);
+
+	// Ensure inputKeyMaterial is backed by a real ArrayBuffer
+	const hkdfKeyMaterial =
+		inputKeyMaterial.buffer instanceof SharedArrayBuffer
+			? new Uint8Array(Array.from(inputKeyMaterial))
+			: new Uint8Array(inputKeyMaterial.buffer, inputKeyMaterial.byteOffset, inputKeyMaterial.byteLength);
 
 	// Import the input key material
-	const importedKey = await subtle.importKey('raw', inputKeyMaterial, { name: 'HKDF' }, false, ['deriveBits'])
+	const importedKey = await subtle.importKey('raw', hkdfKeyMaterial, { name: 'HKDF' }, false, ['deriveBits']);
 
 	// Derive bits using HKDF
 	const derivedBits = await subtle.deriveBits(
@@ -149,7 +155,7 @@ export async function hkdf(
 		},
 		importedKey,
 		expandedLength * 8 // Convert bytes to bits
-	)
+	);
 
 	return Buffer.from(derivedBits)
 }
@@ -160,15 +166,27 @@ export async function derivePairingCodeKey(pairingCode: string, salt: Buffer): P
 	const pairingCodeBuffer = encoder.encode(pairingCode)
 	const saltBuffer = salt instanceof Uint8Array ? salt : new Uint8Array(salt)
 
+	// Ensure pairingCodeBuffer is backed by a real ArrayBuffer
+	const pbkdf2KeyMaterial =
+		pairingCodeBuffer.buffer instanceof SharedArrayBuffer
+			? new Uint8Array(Array.from(pairingCodeBuffer))
+			: new Uint8Array(pairingCodeBuffer.buffer, pairingCodeBuffer.byteOffset, pairingCodeBuffer.byteLength)
+
 	// Import the pairing code as key material
-	const keyMaterial = await subtle.importKey('raw', pairingCodeBuffer, { name: 'PBKDF2' }, false, ['deriveBits'])
+	const keyMaterial = await subtle.importKey('raw', pbkdf2KeyMaterial, { name: 'PBKDF2' }, false, ['deriveBits'])
+
+	// Ensure saltBuffer is backed by a real ArrayBuffer
+	const pbkdf2Salt =
+		saltBuffer.buffer instanceof SharedArrayBuffer
+			? new Uint8Array(Array.from(saltBuffer))
+			: new Uint8Array(saltBuffer.buffer, saltBuffer.byteOffset, saltBuffer.byteLength)
 
 	// Derive bits using PBKDF2 with the same parameters
 	// 2 << 16 = 131,072 iterations
 	const derivedBits = await subtle.deriveBits(
 		{
 			name: 'PBKDF2',
-			salt: saltBuffer,
+			salt: pbkdf2Salt,
 			iterations: 2 << 16,
 			hash: 'SHA-256'
 		},
