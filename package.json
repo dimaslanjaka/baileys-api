@@ -95,6 +95,9 @@
     },
     "link-preview-js": {
       "optional": true
+    },
+    "sharp": {
+      "optional": true
     }
   },
   "packageManager": "yarn@4.9.2",
