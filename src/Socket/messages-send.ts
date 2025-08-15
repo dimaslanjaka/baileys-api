@@ -75,7 +75,7 @@ export const makeMessagesSocket = (config: SocketConfig) => {
 
 	const userDevicesCache =
 		config.userDevicesCache ||
-		new NodeCache<JidWithDevice[]>({
+		new NodeCache({
 			stdTTL: DEFAULT_CACHE_TTLS.USER_DEVICES, // 5 minutes
 			useClones: false
 		})

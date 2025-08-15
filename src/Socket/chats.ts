@@ -78,7 +78,7 @@ export const makeChatsSocket = (config: SocketConfig) => {
 
 	const placeholderResendCache =
 		config.placeholderResendCache ||
-		(new NodeCache<number>({
+		(new NodeCache({
 			stdTTL: DEFAULT_CACHE_TTLS.MSG_RETRY, // 1 hour
 			useClones: false
 		}) as CacheStore)
@@ -986,7 +986,7 @@ export const makeChatsSocket = (config: SocketConfig) => {
 	const upsertMessage = ev.createBufferedFunction(async (msg: WAMessage, type: MessageUpsertType) => {
 		ev.emit('messages.upsert', { messages: [msg], type })
 
-		if (!!msg.pushName) {
+		if (msg.pushName) {
 			let jid = msg.key.fromMe ? authState.creds.me!.id : msg.key.participant || msg.key.remoteJid
 			jid = jidNormalizedUser(jid!)
 

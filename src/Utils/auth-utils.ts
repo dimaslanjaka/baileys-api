@@ -27,7 +27,7 @@ export function makeCacheableSignalKeyStore(
 ): SignalKeyStore {
 	const cache =
 		_cache ||
-		new NodeCache<SignalDataTypeMap[keyof SignalDataTypeMap]>({
+		new NodeCache({
 			stdTTL: DEFAULT_CACHE_TTLS.SIGNAL_STORE, // 5 minutes
 			useClones: false,
 			deleteOnExpire: true
@@ -164,7 +164,7 @@ export const addTransactionCapability = (
 						let tries = maxCommitRetries
 						while (tries) {
 							tries -= 1
-							//eslint-disable-next-line max-depth
+
 							try {
 								await state.set(mutations)
 								logger.trace({ dbQueriesInTransaction }, 'committed transaction')

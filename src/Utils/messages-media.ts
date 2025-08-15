@@ -1,4 +1,4 @@
- import { Boom } from '@hapi/boom'
+import { Boom } from '@hapi/boom'
 import axios, { type AxiosRequestConfig } from 'axios'
 import { exec } from 'child_process'
 import * as Crypto from 'crypto'
@@ -153,26 +153,24 @@ export const extractImageThumb = async (bufferOrFilePath: Readable | Buffer | st
 			}
 		}
 	} else if ('jimp' in lib && lib.jimp) {
-		const Jimp = (lib.jimp as any).default || lib.jimp;
-		let jimpImg;
+		const Jimp = (lib.jimp as any).default || lib.jimp
+		let jimpImg
 		if (typeof bufferOrFilePath === 'string') {
-			jimpImg = await Jimp.read(bufferOrFilePath);
+			jimpImg = await Jimp.read(bufferOrFilePath)
 		} else if (Buffer.isBuffer(bufferOrFilePath)) {
-			jimpImg = await Jimp.read(bufferOrFilePath);
+			jimpImg = await Jimp.read(bufferOrFilePath)
 		} else {
-			throw new Boom('Invalid bufferOrFilePath type for Jimp.read');
+			throw new Boom('Invalid bufferOrFilePath type for Jimp.read')
 		}
 		const dimensions = {
 			width: jimpImg.bitmap.width,
 			height: jimpImg.bitmap.height
-		};
-		const buffer = await jimpImg
-			.resize(width, Jimp.AUTO, Jimp.RESIZE_BILINEAR)
-			.getBufferAsync(Jimp.MIME_JPEG);
+		}
+		const buffer = await jimpImg.resize(width, Jimp.AUTO, Jimp.RESIZE_BILINEAR).getBufferAsync(Jimp.MIME_JPEG)
 		return {
 			buffer,
 			original: dimensions
-		};
+		}
 	} else {
 		throw new Boom('No image processing library available')
 	}
@@ -209,13 +207,11 @@ export const generateProfilePicture = async (
 			})
 			.toBuffer()
 	} else if ('jimp' in lib && lib.jimp) {
-		const Jimp = (lib.jimp as any).default || lib.jimp;
-		const jimpImg = await Jimp.read(Buffer.from(buffer));
-		const min = Math.min(jimpImg.bitmap.width, jimpImg.bitmap.height);
-		jimpImg.crop(0, 0, min, min);
-		img = Promise.resolve(
-			await jimpImg.resize(w, h, Jimp.RESIZE_BILINEAR).getBufferAsync(Jimp.MIME_JPEG)
-		);
+		const Jimp = (lib.jimp as any).default || lib.jimp
+		const jimpImg = await Jimp.read(Buffer.from(buffer))
+		const min = Math.min(jimpImg.bitmap.width, jimpImg.bitmap.height)
+		jimpImg.crop(0, 0, min, min)
+		img = Promise.resolve(await jimpImg.resize(w, h, Jimp.RESIZE_BILINEAR).getBufferAsync(Jimp.MIME_JPEG))
 	} else {
 		throw new Boom('No image processing library available')
 	}

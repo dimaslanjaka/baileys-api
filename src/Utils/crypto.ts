@@ -130,20 +130,20 @@ export async function hkdf(
 	info: { salt?: Buffer; info?: string }
 ): Promise<Buffer> {
 	// Set default values if not provided
-	const salt = info.salt ? new Uint8Array(info.salt) : new Uint8Array(0);
-	const infoBytes = info.info ? new TextEncoder().encode(info.info) : new Uint8Array(0);
+	const salt = info.salt ? new Uint8Array(info.salt) : new Uint8Array(0)
+	const infoBytes = info.info ? new TextEncoder().encode(info.info) : new Uint8Array(0)
 
 	// Ensure we have a Uint8Array for the key material
-	const inputKeyMaterial = buffer instanceof Uint8Array ? buffer : new Uint8Array(buffer);
+	const inputKeyMaterial = buffer instanceof Uint8Array ? buffer : new Uint8Array(buffer)
 
 	// Ensure inputKeyMaterial is backed by a real ArrayBuffer
 	const hkdfKeyMaterial =
 		inputKeyMaterial.buffer instanceof SharedArrayBuffer
 			? new Uint8Array(Array.from(inputKeyMaterial))
-			: new Uint8Array(inputKeyMaterial.buffer, inputKeyMaterial.byteOffset, inputKeyMaterial.byteLength);
+			: new Uint8Array(inputKeyMaterial.buffer, inputKeyMaterial.byteOffset, inputKeyMaterial.byteLength)
 
 	// Import the input key material
-	const importedKey = await subtle.importKey('raw', hkdfKeyMaterial, { name: 'HKDF' }, false, ['deriveBits']);
+	const importedKey = await subtle.importKey('raw', hkdfKeyMaterial, { name: 'HKDF' }, false, ['deriveBits'])
 
 	// Derive bits using HKDF
 	const derivedBits = await subtle.deriveBits(
@@ -155,7 +155,7 @@ export async function hkdf(
 		},
 		importedKey,
 		expandedLength * 8 // Convert bytes to bits
-	);
+	)
 
 	return Buffer.from(derivedBits)
 }
