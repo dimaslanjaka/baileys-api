@@ -200,14 +200,13 @@ export const makeMessagesSocket = (config: SocketConfig) => {
 			const user = jidDecode(jid)?.user
 			jid = jidNormalizedUser(jid)
 			if (useCache) {
-				const devices = userDevicesCache.get<JidWithDevice[]>(user!)
-				if (devices) {
-					deviceResults.push(...devices)
-
-					logger.trace({ user }, 'using cache for devices')
-				} else {
-					toFetch.push(jid)
-				}
+			   const devices = userDevicesCache.get<JidWithDevice[]>(user!)
+			   if (Array.isArray(devices) && devices.length > 0) {
+				   deviceResults.push(...devices)
+				   logger.trace({ user }, 'using cache for devices')
+			   } else {
+				   toFetch.push(jid)
+			   }
 			} else {
 				toFetch.push(jid)
 			}
