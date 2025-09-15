@@ -4,7 +4,6 @@ import { inflate } from 'zlib'
 import { proto } from '../../WAProto/index.js'
 import type { Chat, Contact } from '../Types'
 import { WAMessageStubType } from '../Types'
-import { isJidUser } from '../WABinary'
 import { toNumber } from './generics'
 import { normalizeMessageContent } from './messages'
 import { downloadContentFromMessage } from './messages-media'
@@ -18,10 +17,10 @@ export const downloadHistory = async (msg: proto.Message.IHistorySyncNotificatio
 		bufferArray.push(chunk)
 	}
 
-	let buffer = Buffer.concat(bufferArray)
+	let buffer: Buffer = Buffer.concat(bufferArray)
 
-	// decompress buffer and ensure correct Buffer type
-	buffer = Buffer.from((await inflatePromise(buffer)) as Buffer)
+	// decompress buffer
+	buffer = await inflatePromise(buffer)
 
 	const syncData = proto.HistorySync.decode(buffer)
 	return syncData
@@ -42,7 +41,7 @@ export const processHistoryMessage = (item: proto.IHistorySync) => {
 					id: chat.id,
 					name: chat.name || undefined,
 					lid: chat.lidJid || undefined,
-					jid: isJidUser(chat.id) ? chat.id : undefined
+					phoneNumber: chat.pnJid || undefined
 				})
 
 				const msgs = chat.messages || []

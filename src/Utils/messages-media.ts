@@ -10,13 +10,12 @@ import { join } from 'path'
 import { Readable, Transform } from 'stream'
 import { URL } from 'url'
 import { proto } from '../../WAProto/index.js'
-import { DEFAULT_ORIGIN, MEDIA_HKDF_KEY_MAPPING, MEDIA_PATH_MAP } from '../Defaults'
+import { DEFAULT_ORIGIN, MEDIA_HKDF_KEY_MAPPING, MEDIA_PATH_MAP, type MediaType } from '../Defaults'
 import type {
 	BaileysEventMap,
 	DownloadableMessage,
 	MediaConnInfo,
 	MediaDecryptionKeyInfo,
-	MediaType,
 	MessageType,
 	SocketConfig,
 	WAGenericMediaMessage,
@@ -152,21 +151,15 @@ export const extractImageThumb = async (bufferOrFilePath: Readable | Buffer | st
 				height: dimensions.height
 			}
 		}
-	} else if ('jimp' in lib && lib.jimp) {
-		const Jimp = (lib.jimp as any).default || lib.jimp
-		let jimpImg
-		if (typeof bufferOrFilePath === 'string') {
-			jimpImg = await Jimp.read(bufferOrFilePath)
-		} else if (Buffer.isBuffer(bufferOrFilePath)) {
-			jimpImg = await Jimp.read(bufferOrFilePath)
-		} else {
-			throw new Boom('Invalid bufferOrFilePath type for Jimp.read')
-		}
+	} else if ('jimp' in lib && typeof lib.jimp?.Jimp === 'object') {
+		const jimp = await (lib.jimp.Jimp as any).read(bufferOrFilePath)
 		const dimensions = {
-			width: jimpImg.bitmap.width,
-			height: jimpImg.bitmap.height
+			width: jimp.width,
+			height: jimp.height
 		}
-		const buffer = await jimpImg.resize(width, Jimp.AUTO, Jimp.RESIZE_BILINEAR).getBufferAsync(Jimp.MIME_JPEG)
+		const buffer = await jimp
+			.resize({ w: width, mode: lib.jimp.ResizeStrategy.BILINEAR })
+			.getBuffer('image/jpeg', { quality: 50 })
 		return {
 			buffer,
 			original: dimensions
@@ -206,12 +199,12 @@ export const generateProfilePicture = async (
 				quality: 50
 			})
 			.toBuffer()
-	} else if ('jimp' in lib && lib.jimp) {
-		const Jimp = (lib.jimp as any).default || lib.jimp
-		const jimpImg = await Jimp.read(Buffer.from(buffer))
-		const min = Math.min(jimpImg.bitmap.width, jimpImg.bitmap.height)
-		jimpImg.crop(0, 0, min, min)
-		img = Promise.resolve(await jimpImg.resize(w, h, Jimp.RESIZE_BILINEAR).getBufferAsync(Jimp.MIME_JPEG))
+	} else if ('jimp' in lib && typeof lib.jimp?.Jimp === 'object') {
+		const jimp = await (lib.jimp.Jimp as any).read(buffer)
+		const min = Math.min(jimp.width, jimp.height)
+		const cropped = jimp.crop({ x: 0, y: 0, w: min, h: min })
+
+		img = cropped.resize({ w, h, mode: lib.jimp.ResizeStrategy.BILINEAR }).getBuffer('image/jpeg', { quality: 50 })
 	} else {
 		throw new Boom('No image processing library available')
 	}
@@ -638,7 +631,7 @@ export const getWAUploadToServer = (
 		// send a query JSON to obtain the url & auth token to upload our media
 		let uploadInfo = await refreshMediaConn(false)
 
-		let urls: { mediaUrl: string; directPath: string } | undefined
+		let urls: { mediaUrl: string; directPath: string; meta_hmac?: string; ts?: number; fbid?: number } | undefined
 		const hosts = [...customUploadHosts, ...uploadInfo.hosts]
 
 		fileEncSha256B64 = encodeBase64EncodedStringForUpload(fileEncSha256B64)
@@ -670,7 +663,10 @@ export const getWAUploadToServer = (
 				if (result?.url || result?.directPath) {
 					urls = {
 						mediaUrl: result.url,
-						directPath: result.direct_path
+						directPath: result.direct_path,
+						meta_hmac: result.meta_hmac,
+						fbid: result.fbid,
+						ts: result.ts
 					}
 					break
 				} else {
