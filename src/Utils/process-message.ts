@@ -308,7 +308,7 @@ const processMessage = async (
 				const { pnToLidMappings, chatDbMigrationTimestamp } =
 					proto.LIDMigrationMappingSyncPayload.decode(encodedPayload)
 				logger?.debug({ pnToLidMappings, chatDbMigrationTimestamp }, 'got lid mappings and chat db migration timestamp')
-				const pairs = []
+				const pairs = [] as { lid: string; pn: string }[]
 				for (const { pn, latestLid, assignedLid } of pnToLidMappings) {
 					const lid = latestLid || assignedLid
 					pairs.push({ lid: `${lid}@lid`, pn: `${pn}@s.whatsapp.net` })
