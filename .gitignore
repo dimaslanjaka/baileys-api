@@ -36,3 +36,5 @@ TestData/
 Proxy/
 *.log
 tmp/
+wa-logs.txt
+coverage
