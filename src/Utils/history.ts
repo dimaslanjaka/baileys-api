@@ -1,8 +1,7 @@
-import type { AxiosRequestConfig } from 'axios'
 import { promisify } from 'util'
 import { inflate } from 'zlib'
 import { proto } from '../../WAProto/index.js'
-import type { Chat, Contact } from '../Types'
+import type { Chat, Contact, WAMessage } from '../Types'
 import { WAMessageStubType } from '../Types'
 import { toNumber } from './generics'
 import { normalizeMessageContent } from './messages'
@@ -10,7 +9,7 @@ import { downloadContentFromMessage } from './messages-media'
 
 const inflatePromise = promisify(inflate)
 
-export const downloadHistory = async (msg: proto.Message.IHistorySyncNotification, options: AxiosRequestConfig<{}>) => {
+export const downloadHistory = async (msg: proto.Message.IHistorySyncNotification, options: RequestInit) => {
 	const stream = await downloadContentFromMessage(msg, 'md-msg-hist', { options })
 	const bufferArray: Buffer[] = []
 	for await (const chunk of stream) {
@@ -27,7 +26,7 @@ export const downloadHistory = async (msg: proto.Message.IHistorySyncNotificatio
 }
 
 export const processHistoryMessage = (item: proto.IHistorySync) => {
-	const messages: proto.IWebMessageInfo[] = []
+	const messages: WAMessage[] = []
 	const contacts: Contact[] = []
 	const chats: Chat[] = []
 
@@ -38,7 +37,7 @@ export const processHistoryMessage = (item: proto.IHistorySync) => {
 		case proto.HistorySync.HistorySyncType.ON_DEMAND:
 			for (const chat of item.conversations! as Chat[]) {
 				contacts.push({
-					id: chat.id,
+					id: chat.id!,
 					name: chat.name || undefined,
 					lid: chat.lidJid || undefined,
 					phoneNumber: chat.pnJid || undefined
@@ -48,7 +47,7 @@ export const processHistoryMessage = (item: proto.IHistorySync) => {
 				delete chat.messages
 
 				for (const item of msgs) {
-					const message = item.message!
+					const message = item.message! as WAMessage
 					messages.push(message)
 
 					if (!chat.messages?.length) {
@@ -95,15 +94,20 @@ export const processHistoryMessage = (item: proto.IHistorySync) => {
 
 export const downloadAndProcessHistorySyncNotification = async (
 	msg: proto.Message.IHistorySyncNotification,
-	options: AxiosRequestConfig<{}>
+	options: RequestInit
 ) => {
-	const historyMsg = await downloadHistory(msg, options)
+	let historyMsg: proto.HistorySync
+	if (msg.initialHistBootstrapInlinePayload) {
+		historyMsg = proto.HistorySync.decode(await inflatePromise(msg.initialHistBootstrapInlinePayload))
+	} else {
+		historyMsg = await downloadHistory(msg, options)
+	}
 	return processHistoryMessage(historyMsg)
 }
 
 export const getHistoryMsg = (message: proto.IMessage) => {
 	const normalizedContent = !!message ? normalizeMessageContent(message) : undefined
-	const anyHistoryMsg = normalizedContent?.protocolMessage?.historySyncNotification
+	const anyHistoryMsg = normalizedContent?.protocolMessage?.historySyncNotification!
 
 	return anyHistoryMsg
 }
