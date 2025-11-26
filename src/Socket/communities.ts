@@ -228,13 +228,7 @@ export const makeCommunitiesSocket = (config: SocketConfig) => {
 			// Fetch all subgroups of the community
 			const result = await communityQuery(communityJid, 'get', [{ tag: 'sub_groups', attrs: {} }])
 
-			const linkedGroupsData: {
-				id?: string
-				subject: string
-				creation?: number
-				owner?: string
-				size?: number
-			}[] = []
+			const linkedGroupsData = [] as any[]
 			const subGroupsNode = getBinaryNodeChild(result, 'sub_groups')
 			if (subGroupsNode) {
 				const groupNodes = getBinaryNodeChildren(subGroupsNode, 'group')

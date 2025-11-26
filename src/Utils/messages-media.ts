@@ -264,7 +264,6 @@ export async function getAudioWaveform(buffer: Buffer | string | Readable, logge
 			const blockStart = blockSize * i // the location of the first sample in the block
 			let sum = 0
 			for (let j = 0; j < blockSize; j++) {
-				// rawData[...] can technically be undefined; coalesce to 0 to satisfy TS and avoid NaN
 				const sample = rawData[blockStart + j] ?? 0
 				sum = sum + Math.abs(sample) // find the sum of all the samples in the block
 			}
