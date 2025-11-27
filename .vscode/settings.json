@@ -1,0 +1,6 @@
+{
+  "code-runner.saveAllFilesBeforeRun": true,
+	"code-runner.executorMapByGlob": {
+		"**/*.ts": "node --loader ts-node/esm"
+	}
+}
