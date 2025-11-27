@@ -3,6 +3,7 @@ import P from 'pino'
 import readline from 'readline'
 import makeWASocket, { delay, DisconnectReason, fetchLatestBaileysVersion, getAggregateVotesInPollMessage, isJidNewsletter, makeCacheableSignalKeyStore, proto, useMultiFileAuthState } from '../lib/index.js'
 import QRCode from 'qrcode-terminal'
+import path from 'path'
 
 const logger = P({
   level: "trace",
@@ -38,7 +39,7 @@ const question = (text) => new Promise((resolve) => rl.question(text, resolve))
 
 // start a connection
 const startSock = async() => {
-	const { state, saveCreds } = await useMultiFileAuthState('baileys_auth_info')
+	const { state, saveCreds } = await useMultiFileAuthState(path.join('../../../baileys_auth_info'))
 	// fetch latest version of WA Web
 	const { version, isLatest } = await fetchLatestBaileysVersion()
 	console.log(`using WA v${version.join('.')}, isLatest: ${isLatest}`)

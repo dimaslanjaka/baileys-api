@@ -1,6 +1,6 @@
 import { Mutex } from 'async-mutex'
 import { mkdir, readFile, stat, unlink, writeFile } from 'fs/promises'
-import { join } from 'path'
+import { isAbsolute, join, resolve } from 'path'
 import { proto } from '../../WAProto/index.js'
 import type { AuthenticationCreds, AuthenticationState, SignalDataTypeMap } from '../Types'
 import { initAuthCreds } from './auth-utils'
@@ -27,15 +27,21 @@ const getFileLock = (path: string): Mutex => {
  * stores the full authentication state in a single folder.
  * Far more efficient than singlefileauthstate
  *
+ * Supports both relative and absolute folder paths.
+ * - Relative paths are resolved relative to the current working directory
+ * - Absolute paths are used as-is
+ *
  * Again, I wouldn't endorse this for any production level use other than perhaps a bot.
  * Would recommend writing an auth state for use with a proper SQL or No-SQL DB
  * */
 export const useMultiFileAuthState = async (
 	folder: string
 ): Promise<{ state: AuthenticationState; saveCreds: () => Promise<void> }> => {
+	// Resolve folder path to absolute path to support both relative and absolute paths
+	const absoluteFolder = isAbsolute(folder) ? folder : resolve(folder)
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	const writeData = async (data: any, file: string) => {
-		const filePath = join(folder, fixFileName(file)!)
+		const filePath = join(absoluteFolder, fixFileName(file)!)
 		const mutex = getFileLock(filePath)
 
 		return mutex.acquire().then(async release => {
@@ -49,7 +55,7 @@ export const useMultiFileAuthState = async (
 
 	const readData = async (file: string) => {
 		try {
-			const filePath = join(folder, fixFileName(file)!)
+			const filePath = join(absoluteFolder, fixFileName(file)!)
 			const mutex = getFileLock(filePath)
 
 			return await mutex.acquire().then(async release => {
@@ -67,7 +73,7 @@ export const useMultiFileAuthState = async (
 
 	const removeData = async (file: string) => {
 		try {
-			const filePath = join(folder, fixFileName(file)!)
+			const filePath = join(absoluteFolder, fixFileName(file)!)
 			const mutex = getFileLock(filePath)
 
 			return mutex.acquire().then(async release => {
@@ -81,15 +87,15 @@ export const useMultiFileAuthState = async (
 		} catch {}
 	}
 
-	const folderInfo = await stat(folder).catch(() => {})
+	const folderInfo = await stat(absoluteFolder).catch(() => {})
 	if (folderInfo) {
 		if (!folderInfo.isDirectory()) {
 			throw new Error(
-				`found something that is not a directory at ${folder}, either delete it or specify a different location`
+				`found something that is not a directory at ${absoluteFolder}, either delete it or specify a different location`
 			)
 		}
 	} else {
-		await mkdir(folder, { recursive: true })
+		await mkdir(absoluteFolder, { recursive: true })
 	}
 
 	const fixFileName = (file?: string) => file?.replace(/\//g, '__')?.replace(/:/g, '-')
